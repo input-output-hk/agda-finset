@@ -64,7 +64,7 @@ list-monad-ht : {X Y : Set}(e : Y)(xs : List X)(f : X → List Y) → (x : X)
  → e ∈ f x 
  → e ∈ (xs >>= f)
 list-monad-ht e [] f x () ein
-list-monad-ht e (x ∷ xs) f .x here ein 
+list-monad-ht e (x ∷ xs) f .x (here refl) ein 
  rewrite >>=split [ x ] xs f = ∈-weak-rgt ein
 list-monad-ht e (x ∷ xs) f x₁ (there xin) ein 
  rewrite >>=split [ x ] xs f 
@@ -76,6 +76,6 @@ list-monad-th : {X Y : Set}(e : Y)(xs : List X)(f : X → List Y)
 list-monad-th e [] f ()
 list-monad-th e (x ∷ xs) f ein 
  rewrite >>=split [ x ] xs f with ∈-split {_} {f x} {xs >>= f} ein
-list-monad-th e (x ∷ xs) f ein | inj₁ x₁ = x , here , x₁
+list-monad-th e (x ∷ xs) f ein | inj₁ x₁ = x , (here refl) , x₁
 list-monad-th e (x ∷ xs) f ein | inj₂ y with list-monad-th e xs f y 
 ... | (p1 , p2 , p3) = p1 , there p2 , p3

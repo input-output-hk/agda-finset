@@ -9,9 +9,6 @@ open import Utilities.Logic
 open import Utilities.ListProperties
 
 open import Data.Empty
-infix 5 _∉_
-_∉_ : {X : Set} → X → List X → Set
-_∉_ x xs = x ∈ xs → ⊥
 
 data SubSeq {X : Set} (F : X → Bool) :  List X → List X → Set where
   con1 : SubSeq F [] []
@@ -56,9 +53,9 @@ open import Data.Product
 
 remDupSound : {X : Set} → (∈? : DecIn X) → (x : X)    → (xs : List X) → x ∈ xs → x ∈ remDup ∈? xs
 remDupSound ∈? x [] ()
-remDupSound ∈? x (.x ∷ xs) here with ∈? x (remDup ∈? xs)
-remDupSound ∈? x (.x ∷ xs) here | yes p = p
-remDupSound ∈? x (.x ∷ xs) here | no ¬p = here
+remDupSound ∈? x (.x ∷ xs) (here refl) with ∈? x (remDup ∈? xs)
+remDupSound ∈? x (.x ∷ xs) (here refl) | yes p = p
+remDupSound ∈? x (.x ∷ xs) (here refl) | no ¬p = here refl
 remDupSound ∈? x (x₁ ∷ xs) (there xin) with remDupSound ∈? x xs xin
 ... | o with ∈? x₁ (remDup ∈? xs)
 remDupSound ∈? x (x₁ ∷ xs) (there xin) | o | yes p = o
@@ -69,7 +66,7 @@ remDupComplete : {X : Set} → (∈? : DecIn X) → (x : X) → (xs : List X) �
 remDupComplete ∈? x [] ()
 remDupComplete ∈? x (x₁ ∷ xs) xin with ∈? x₁ (remDup ∈? xs) 
 remDupComplete ∈? x (x₁ ∷ xs) xin | yes p = there (remDupComplete ∈? x xs xin)
-remDupComplete ∈? x₁ (.x₁ ∷ xs) here | no ¬p = here
+remDupComplete ∈? x₁ (.x₁ ∷ xs) (here refl) | no ¬p = here refl
 remDupComplete ∈? x (x₁ ∷ xs) (there xin) | no ¬p = there (remDupComplete ∈? x xs xin)
 
 
@@ -78,11 +75,11 @@ remDupCorrect ∈? [] x ()
 remDupCorrect ∈? (x ∷ xs) x₁ x₂ with ∈? x (remDup ∈? xs)
 remDupCorrect ∈? (x ∷ xs) x₁ x₂ | yes p with remDupCorrect ∈? xs x₁ x₂  
 ... | o1 , o2 , o3 , o4 , o5 = o1 , o2 , o3 , o4 , o5
-remDupCorrect ∈? (x ∷ xs) .x here | no ¬p = [] , _ , refl , (λ { () }) , ¬p
+remDupCorrect ∈? (x ∷ xs) .x (here refl) | no ¬p = [] , _ , refl , (λ { () }) , ¬p
 remDupCorrect ∈? (x ∷ xs) x₁ (there x₂) | no ¬p with remDupCorrect ∈? xs x₁ x₂  | in2eq ∈? x₁ x 
 remDupCorrect ∈? (x ∷ xs) .x (there x₂) | no ¬p | o1 , o2 , o3 , o4 , o5 
   | yes refl rewrite o3 
-  = ex-falso-quodlibet (¬p (∈-weak-lft {_} {o1} {x ∷ o2} here))
+  = ex-falso-quodlibet (¬p (∈-weak-lft {_} {o1} {x ∷ o2} (here refl)))
 remDupCorrect {X} ∈? (x ∷ xs) x₁ (there x₂) 
   | no ¬p₁ 
   | o1 , o2 , o3 , o4 , o5 
@@ -90,7 +87,7 @@ remDupCorrect {X} ∈? (x ∷ xs) x₁ (there x₂)
   = x ∷ o1 , o2 , cong (_∷_ x) o3 , h x x₁ ¬p o4 , o5
   where
     h : (x x₁ : X) → ¬ x₁ ≡ x → ¬ x₁ ∈ o1  → ¬ x₁ ∈ (x ∷ o1)
-    h x1 .x1 pr1 pr2 here = pr1 refl
+    h x1 .x1 pr1 pr2 (here refl) = pr1 refl
     h x1 x₃  pr1 pr2 (there pr) = pr2 pr
 
 

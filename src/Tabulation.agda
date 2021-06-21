@@ -6,7 +6,7 @@ module Tabulation where
 open import Data.Bool hiding (_≟_)
 open import Data.Sum  hiding (map)
 open import Data.Product  hiding (map)
-open import Data.Maybe hiding (map ; All)
+open import Data.Maybe hiding (map)
 open import Data.List
 open import Data.Empty
 
@@ -48,10 +48,10 @@ fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , y') , z2 , refl with nd
                      (map (λ r → proj₁ r) (o1 ++ (x , y) ∷ o2)) 
                      (map proj₁ o1 , map proj₁ ((x , y) ∷ o2) , x , 
                         maphom o1 ((x , y) ∷ o2) proj₁ , 
-                          ∃-after-map (x , y') o1 proj₁ k , here) nd 
+                          ∃-after-map (x , y') o1 proj₁ k , here refl) nd 
 ... | ()
 fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , .y) , z2 , refl 
-  | q1 , q2 , q3 , q4 , q5 | b | v | o1 , o2 , o3 | inj₂ here = refl
+  | q1 , q2 , q3 , q4 , q5 | b | v | o1 , o2 , o3 | inj₂ (here refl) = refl
 fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , y') , z2 , refl 
   | q1 , q2 , q3 , q4 , q5 | b | v | o1 , o2 , o3 | inj₂ (there k) 
   rewrite ++-assoc o1 ((x , y) ∷ []) o2 with ∈-split {_} {(o1 ++ (x , y) ∷ [])} {o2} z2
@@ -64,13 +64,13 @@ fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , y') , z2 , refl
      (map proj₁ (o1 ++ (x , y) ∷ []) , 
        map proj₁ o2 , x , maphom (o1 ++ (x , y) ∷ []) o2 proj₁ , 
          ∈-eq-cong x (map proj₁ o1 ++ x ∷ []) (map (λ r → proj₁ r) (o1 ++ (x , y) ∷ [])) 
-          (∈-weak-lft {_} {map proj₁ o1} {x ∷ []} {x} here) 
+          (∈-weak-lft {_} {map proj₁ o1} {x ∷ []} {x} (here refl)) 
              (sym (maphom o1 ((x , y) ∷ [])  proj₁))  , 
                ∃-after-map (x , y') o2 proj₁ k ) nd
 ... | ()
 fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , .y) , z2 , refl 
   | q1 , q2 , q3 , q4 , q5 | b | v | o1 , o2 , o3 | inj₂ (there k) 
-  | inj₁ xyin1  | inj₂ here = refl
+  | inj₁ xyin1  | inj₂ (here refl) = refl
 fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , y') , z2 , refl 
   | q1 , q2 , q3 , q4 , q5 | b | v | o1 , o2 , o3 
   | inj₂ (there k) | inj₁ xyin1  | inj₂ (there ()) 
@@ -84,7 +84,7 @@ fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , y') , z2 , refl
        (map proj₁ (o1 ++ (x , y) ∷ []) , map (λ r → proj₁ r) o2 , x , 
          maphom (o1 ++ (x , y) ∷ []) o2 proj₁ , ∈-eq-cong x (map proj₁ o1 ++ x ∷ []) 
           (map (λ r → proj₁ r) (o1 ++ (x , y) ∷ [])) 
-            (∈-weak-lft {_} {map proj₁ o1} {x ∷ []} {x} here) 
+            (∈-weak-lft {_} {map proj₁ o1} {x ∷ []} {x} (here refl)) 
               (sym (maphom o1 ((x , y) ∷ [])  proj₁)) , inp) nd
 fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , y') , z2 , refl 
   | q1 , q2 , q3 , q4 , q5 | b | v 
@@ -160,7 +160,7 @@ toListComplete f xs x y xin fx with ∃-split x xs xin
 ... | o1 , o2 , o3  rewrite o3 
   | maphom o1 (x ∷ o2) (λ x₁ → x₁ , f x₁) 
   | fx = ∈-weak-lft {_} {(map (λ x₁ → x₁ , f x₁) o1)} 
-         {(x , y) ∷ map (λ x₁ → x₁ , f x₁) o2} here
+         {(x , y) ∷ map (λ x₁ → x₁ , f x₁) o2} (here refl)
 
 
 toListSoundHelp : {X Y : Set} → (f : X → Y) 
@@ -168,8 +168,8 @@ toListSoundHelp : {X Y : Set} → (f : X → Y)
   → ∀ x y → (x , y) ∈ toList xs f
   → x ∈ xs
 toListSoundHelp f [] x y ()
-toListSoundHelp f (x ∷ xs) .x .(f x) here 
-  = here
+toListSoundHelp f (x ∷ xs) .x .(f x) (here refl) 
+  = here refl
 toListSoundHelp f (x ∷ xs) x₁ y (there xyin) 
   = there (toListSoundHelp f xs x₁ y xyin)
 
@@ -185,7 +185,7 @@ toListSound f xs nd x y xyin with nd x (toListSoundHelp f xs x y xyin)
 ... | inj₁ z with map-cong proj₁ (x , y) (map (λ x₁ → x₁ , f x₁) o1) z 
 ... | xin rewrite map-pr1 o1 f = ex-falso-quodlibet (o4 xin)
 toListSound f xs nd x .(f x) xyin | o1 , o2 , o3 , o4 , o5  
-  | inj₂ here = refl
+  | inj₂ (here refl) = refl
 toListSound f xs nd x y xyin | o1 , o2 , o3 , o4 , o5 | inj₂ (there z) 
   with map-cong proj₁ (x , y) (map (λ x₁ → x₁ , f x₁) o2) z 
 ... | xin rewrite map-pr1 o2 f = ex-falso-quodlibet (o5 xin)

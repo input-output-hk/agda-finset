@@ -37,20 +37,20 @@ for-all-constl {X = X} {P = P} {Q = Q} {Z = Z} (x ∷ p₁) d pr
  = yes (hlp x p)
   where 
    hlp : (x : Σ X P) → (Q x) →  (p₄ : Σ X P) → p₄ ∈ (x ∷ p₁) → Z p₄ → Q p₄ 
-   hlp x₁ zx .x₁ here zp = zx
+   hlp x₁ zx .x₁ (here refl) zp = zx
    hlp x₁ zx x₂ (there p4i) zp = p₃ x₂ p4i zp
   
 for-all-constl {X = X} {P = P} {Q = Q} {Z = Z} (x ∷ p) d pr 
   | yes p₁ | yes p₂ | no ¬p = no hlp
    where
     hlp : ¬ ((p₃ : Σ X P) → p₃ ∈ (x ∷ p) → Z p₃ → Q p₃)
-    hlp pr' = ¬p (pr' x  here p₂)
+    hlp pr' = ¬p (pr' x  (here refl) p₂)
 
 for-all-constl {X = X} {P = P} {Q = Q} {Z = Z} (x ∷ p) d pr 
   | yes p₁ | no ¬p = yes (hlp x ¬p)
    where
     hlp : (x : Σ X P) → ¬ Z x → (p₂ : Σ X P) → p₂ ∈ (x ∷ p) → Z p₂ → Q p₂
-    hlp x₁ nz .x₁ here zp with nz zp
+    hlp x₁ nz .x₁ (here refl) zp with nz zp
     ... | ()
     hlp x₁ nz x₂ (there pi) zp = p₁ x₂ pi zp
 
@@ -72,22 +72,22 @@ for-all-constl' (x ∷ ps) pr zd qd
   with for-all-constl' ps (λ p pi → pr p (there pi)) zd qd 
 for-all-constl' (x ∷ ps) pr zd qd | yes p with zd x 
 for-all-constl' (x ∷ ps) pr zd qd | yes p₁ | yes p 
-  with qd x (pr x here) p 
+  with qd x (pr x (here refl)) p 
 for-all-constl' {X = X}{P = P}{Q = Q}{Z = Z} (x ∷ ps) pr zd qd | yes p₂ 
   | yes p | yes p₁ = yes (hlp x p₁)
   where
    hlp : (x : X) → Q x → (x₁ : X) → x₁ ∈ (x ∷ ps) → Z x₁ → P x₁ → Q x₁
-   hlp x₁ qx .x₁ here zx px = qx
+   hlp x₁ qx .x₁ (here refl) zx px = qx
    hlp x₁ qx x₂ (there xi) zx px = p₂ x₂  xi zx px
 
 for-all-constl' {X = X}{P = P}{Q = Q}{Z = Z} (x ∷ ps) pr zd qd | yes p₁ | yes p 
-  | no ¬p = no (λ pr' → ¬p (pr' x here p (pr x here)))
+  | no ¬p = no (λ pr' → ¬p (pr' x (here refl) p (pr x (here refl))))
 
 for-all-constl' {X = X}{P = P}{Q = Q}{Z = Z} (x ∷ ps) pr zd qd 
   | yes p | no ¬p = yes (hlp x ¬p)
   where
    hlp : (x : X) → ¬ Z x → (x₁ : X) → x₁ ∈ (x ∷ ps) → Z x₁ → P x₁ → Q x₁
-   hlp x' zx' .x' here zx px with zx' zx 
+   hlp x' zx' .x' (here refl) zx px with zx' zx 
    ... | ()
    hlp x' zx' x₁ (there xi) zx px = p x₁  xi zx px
 for-all-constl' {X = X}{P = P}{Q = Q}{Z = Z}  (x ∷ ps) pr zd qd | no ¬p = no hlp
@@ -136,9 +136,9 @@ exists-constl' : ∀ {a b c d}
    →  Dec (Σ[ x ∈ X ] x ∈ ps × Z x × P x × Q x)
 exists-constl' [] pi zd qd = no (λ { (a , () , c , d)  })
 exists-constl' (x ∷ ps) pi zd qd with zd x 
-exists-constl' (x ∷ ps) pi zd qd | yes p with qd x (pi x here)  p 
+exists-constl' (x ∷ ps) pi zd qd | yes p with qd x (pi x (here refl))  p 
 exists-constl' (x ∷ ps) pi zd qd | yes p | yes p₁ 
- = yes (x , here , p , pi x here , p₁) 
+ = yes (x , (here refl) , p , pi x (here refl) , p₁) 
 exists-constl' (x ∷ ps) pi zd qd | yes p | no ¬p 
   with exists-constl' ps (λ p pi' → pi p (there pi')) zd qd 
 exists-constl' (x ∷ ps) pi zd qd | yes p | no ¬p 
@@ -147,7 +147,7 @@ exists-constl' {X = X}{P = P}{Q = Q}{Z = Z} (x ∷ ps) pi zd qd
   | yes p | no ¬p | no ¬p₁ = no hlp
   where
    hlp : ¬ (Σ[ y ∈ X ] (y ∈ (x ∷ ps) × Z y × P y × Q y))
-   hlp (.x , here , zy , py , qy) = ¬p qy
+   hlp (.x , (here refl) , zy , py , qy) = ¬p qy
    hlp (x₁ , there yi , zy , py , qy) = ¬p₁ (x₁ , yi , zy , py , qy)
 
 exists-constl' (x ∷ ps) pi zd qd | no ¬p 
@@ -159,7 +159,7 @@ exists-constl' {X = X}{P = P}{Q = Q}{Z = Z} (x ∷ ps) pi zd qd
   | no ¬p₁ | no ¬p = no hlp
     where
      hlp : ¬ (Σ[ y ∈ X ] (y ∈ (x ∷ ps) × Z y × P y × Q y))
-     hlp (.x , here , zy , py , qy) = ¬p₁ zy
+     hlp (.x , (here refl) , zy , py , qy) = ¬p₁ zy
      hlp (x₁ , there yi , zy , py , qy) = ¬p (x₁ , yi , zy , py , qy)
 
 

@@ -8,7 +8,7 @@ open import Data.Empty
 
 open import Relation.Binary.PropositionalEquality hiding ([_] ; inspect)
 
-open import Relation.Binary.Core 
+open import Relation.Binary
 open import Relation.Nullary
 open import Data.Empty
 open import Data.Unit
@@ -66,8 +66,8 @@ open import Data.Sum
 
 prod-eq : {A B : Set} → Decidable (_≡_ {A = A}) → Decidable (_≡_ {A = B}) → Decidable (_≡_ {A = A × B})
 prod-eq da db (proj₁ , proj₂) (proj₃ , proj₄) with da proj₁ proj₃ | db proj₂ proj₄ 
-prod-eq da db (proj₁ , proj₂) (.proj₁ , .proj₂) | yes refl | yes refl = yes refl
-prod-eq da db (proj₁ , proj2) (.proj₁ , proj₄) | yes refl | no ¬p = no (λ pr → ¬p (cong proj₂ pr))
+prod-eq da db (proj₁ , proj₂) _ | yes refl | yes refl = yes refl
+prod-eq da db (proj₁ , proj2) (_ , proj₄) | yes refl | no ¬p = no (λ pr → ¬p (cong proj₂ pr))
 prod-eq da db (proj1 , proj2) (proj₃ , .proj2) | no ¬p | yes refl = no (λ pr → ¬p (cong proj₁ pr))
 prod-eq da db (proj₁ , proj2) (proj₃ , proj₄) | no ¬p | no ¬p₁ = no (λ pr → ¬p₁ (cong proj₂ pr))
 

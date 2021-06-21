@@ -4,7 +4,7 @@ module Utilities.ArithmeticProperties where
 open import Relation.Binary.PropositionalEquality as PropEq hiding ([_])
 open import Data.Nat hiding (_<_)
 open import Data.Empty
-open import Data.Bool
+open import Data.Bool hiding (_<_)
 
 data _<_ (m : ℕ) : ℕ → Set where
   <-base : m < suc m

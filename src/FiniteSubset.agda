@@ -89,8 +89,8 @@ ndlft {X} (x ∷ xs) (x₁ ::: nd) = hlp1 ::: nd2' _ (lft _) hlp2 (ndlft _ nd)
   where
 
    ∈b : ∀{a} → {X : Set a} → (y1 y2 : X) → (ys : List X) → (p1 p2 : y1 ∈ ys) 
-      → (_,_ {a} {a} {X} {λ x → x ∈ (y2 ∷ ys)} y1 ((there {a} {X} {y1} {y2} {ys} p1))) ≡ 
-      ((y1 , there {a} {X} {y1} {y2}  {ys} p2)) → p1 ≡ p2
+      → (_,_ {a} {a} {X} {λ x → x ∈ (y2 ∷ ys)} y1 ((there p1))) ≡ 
+      ((y1 , there p2)) → p1 ≡ p2
    ∈b y1 y ys p1 .p1 refl = refl
    
    hlp2 : (y1 y2 : Σ[ x ∈ X ] x ∈ xs) →
@@ -100,8 +100,8 @@ ndlft {X} (x ∷ xs) (x₁ ::: nd) = hlp1 ::: nd2' _ (lft _) hlp2 (ndlft _ nd)
    hlp2 (y1 , pr1) (y2 , pr2) pr | o rewrite o | ∈b y2  _  _  pr1 pr2 pr = refl
 
    hlp1 : ¬
-      (x , here ) ∈ map (λ ep → proj₁ ep , there (proj₂ ep)) (lft xs)
-   hlp1 pr with map∃' (x , here) _  (lft xs) pr 
+      (x , here refl) ∈ map (λ ep → proj₁ ep , there (proj₂ ep)) (lft xs)
+   hlp1 pr with map∃' (x , here refl) _  (lft xs) pr 
    hlp1 pr | o1 , o2 , ()
 
 
@@ -154,7 +154,7 @@ if_then_ : {X : Set}{eq : DecEq X}{b : Bool}
   → FiniteSubSet X eq b
 if b then c = if b then c else mzero
 
-syntax bind A (λ x → B) b = for x ∈ A as b do B
+syntax bind A (λ x → t) b = for x ∈ A as b , t
 
 open import Relation.Nullary.Decidable
 open import Function
@@ -164,8 +164,8 @@ _∩_ : {C : Set}{eq : DecEq C} {b1 b2 : Bool}
   → FiniteSubSet C eq b1 → FiniteSubSet C eq b2
   → FiniteSubSet C eq (b1 ∧ b2)
 _∩_ {C} {eq = _==_} {b1} {b2}  X Y = 
-   for x ∈ X as _ do 
-     for y ∈ Y as true do 
+   for x ∈ X as _ ,
+     for y ∈ Y as true ,
         if ⌊ x == y ⌋ then return {b = true} x 
 
 _∪_ : {C : Set}{eq : DecEq C} {b1 b2 : Bool}

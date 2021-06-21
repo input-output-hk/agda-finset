@@ -11,8 +11,8 @@ open import Relation.Nullary
 open import Data.Bool hiding (_≟_)
 open import Data.Sum  hiding (map)
 open import Data.Product hiding (map)
-open import Data.Maybe hiding (map ; All)
-open import Data.List
+open import Data.Maybe hiding (map)
+open import Data.List hiding (lookup ; allFin)
 open import Data.Fin 
   hiding ( _≤_ ; _<_) 
   renaming (suc to fsuc ; zero to fzero ; pred to fpred)
@@ -20,8 +20,10 @@ open import Data.Empty
 open import Data.Nat hiding (_⊔_)
 open import Data.Unit hiding (_≤_ ; _≟_)
 open import Data.Vec 
-  renaming (map to vmap ; _∈_ to _∈v_ ; _++_ to _++v_ ; _∷_ to _::_) 
-  hiding (drop ; take ; foldl ; foldr)  
+  renaming (map to vmap ; _++_ to _++v_ ; _∷_ to _::_) 
+  hiding (drop ; take ; foldl ; foldr ; length)  
+open import Data.Vec.Membership.Propositional
+  renaming (_∈_ to _∈v_)
 
 open import Function
 
@@ -91,7 +93,7 @@ isEmpty? (_  , _ ) = false
 
 
 vnd : {X : Set} → {n : ℕ}  → (v : Vec X n) 
-  → ((i j : Fin n) → lookup i v ≡ lookup j v → i ≡ j) → NoDupInd (toList v)
+  → ((i j : Fin n) → lookup v i ≡ lookup v j → i ≡ j) → NoDupInd (toList v)
 vnd [] pr = end
 vnd {n = (suc n)} (x :: v) pr = hlp ::: vnd  v hlp2
   where
@@ -100,7 +102,7 @@ vnd {n = (suc n)} (x :: v) pr = hlp ::: vnd  v hlp2
     ... | f , lk with pr fzero (fsuc f) (sym lk) 
     ... | ()
 
-    hlp2 : (i j : Fin n) → lookup i v ≡ lookup j v → i ≡ j
+    hlp2 : (i j : Fin n) → lookup v i ≡ lookup v j → i ≡ j
     hlp2 i j prf = fsucl _ _ (pr (fsuc i) (fsuc j) prf)
       where
         fsucl : {n : ℕ} → (i j : Fin n) → fsuc i ≡ fsuc j → i ≡ j
@@ -111,7 +113,7 @@ vnd {n = (suc n)} (x :: v) pr = hlp ::: vnd  v hlp2
 nodupallfin : ∀ n → NoDupInd (allFinList n)
 nodupallfin n =  vnd (allFin n) hlp
   where
-    hlp : (i j : Fin n) → lookup i (allFin n) ≡ lookup j (allFin n) → i ≡ j
+    hlp : (i j : Fin n) → lookup (allFin n) i ≡ lookup (allFin n) j → i ≡ j
     hlp i j pr rewrite lookup-allFin i | lookup-allFin j = pr
 
 
@@ -122,7 +124,7 @@ all2 : {X Y : Set} → (f : Y → X) → (t : X → Y) → (l : List Y)
 all2 f t l pr all x with all (t x) 
 ... | o with ∃-split (t x) l o 
 ... | ds1 , fs2 , pr' rewrite pr' | maphom ds1 (t x ∷ fs2) f | pr x 
-  = ∈-weak-lft {_} {map f ds1} {x ∷ map f fs2} {x} here 
+  = ∈-weak-lft {_} {map f ds1} {x ∷ map f fs2} {x} (here refl) 
 
 nd2 : {X Y : Set} → (f : Y → X) → (t : X → Y) → (l : List Y) 
   → (∀ y → t (f y) ≡ y)  

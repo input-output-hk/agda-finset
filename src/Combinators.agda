@@ -7,7 +7,7 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.Core 
 open import Relation.Nullary
 
-open import Data.List hiding (product ; sum ; [_])
+open import Data.List hiding (product ; sum ; [_] ; filter) renaming (boolFilter to filter)
 open import Data.Empty
 open import Data.Unit hiding (_≟_ ; _≤_)
 open import Data.Sum hiding (map ; [_,_])
@@ -106,14 +106,14 @@ product {X} {P} {Y} {Q} (els1 , p2i1 , i2p1)
      hlp2 (x1 , y1) (pr1 , pr2)  = list-monad-ht (x1 , y1) els1 
        (λ x₁ → els2 >>= (λ y → return (x₁ , y)))  x1  
        (i2p1 x1  pr1) 
-       (list-monad-ht (x1 , y1) els2 _ y1 (i2p2 y1  pr2)  here)
+       (list-monad-ht (x1 , y1) els2 _ y1 (i2p2 y1  pr2)  (here refl))
  
      hlp : (x : X × Y) →
       x ∈ els1 >>= (λ x₁ → els2 >>= (λ y → return (x₁ , y))) →
       < P , Q > x 
      hlp x pr with list-monad-th x els1 (λ x₁ → els2 >>= (λ y → return (x₁ , y))) pr 
      ... | o1 , o2 , o3 with list-monad-th x els2 _ o3 
-     hlp .(o1 , p1) pr | o1 , o2 , o3 | p1 , p2 , here = p2i1  o1 o2 , p2i2 p1 p2
+     hlp .(o1 , p1) pr | o1 , o2 , o3 | p1 , p2 , (here refl) = p2i1  o1 o2 , p2i2 p1 p2
      hlp x pr | o1 , o2 , o3 | p1 , p2 , there ()
 
 
@@ -136,7 +136,7 @@ sum {X} {P} {Y} {Q} (els1 , p2i1 , i2p1) (els2 , p2i2 , i2p2)
                    → x ∈ els1
           xi1' x [] [] ()
           xi1' x [] (x₁ ∷ ys) (there pr) = xi1' x [] ys pr
-          xi1' x₁ (.x₁ ∷ els1) ys here = here
+          xi1' x₁ (.x₁ ∷ els1) ys (here refl) = (here refl)
           xi1' x (x₁ ∷ els1) ys (there pr) = there (xi1' x els1 ys pr)
       hlp (inj₂ y) xi = p2i2 y (xi2' y els1 els2 xi)
         where
@@ -145,7 +145,7 @@ sum {X} {P} {Y} {Q} (els1 , p2i1 , i2p1) (els2 , p2i2 , i2p2)
                    → inj₂ y ∈ (Data.List.map inj₁ els1 ++ Data.List.map inj₂ els2)
                    → y ∈ els2
           xi2' y [] [] ()
-          xi2' y [] (.y ∷ els2) here = here
+          xi2' y [] (.y ∷ els2) (here refl) = (here refl)
           xi2' y [] (x ∷ els2) (there pr) = there (xi2' y [] els2 pr)
           xi2' y (x ∷ els1) els2 (there pr) = xi2' y els1 els2 pr
 
@@ -157,7 +157,7 @@ sum {X} {P} {Y} {Q} (els1 , p2i1 , i2p1) (els2 , p2i2 , i2p2)
           xi1   : {X : Set} → (x : X) → (els1 : List X) 
                     → {Y : Set} →  (els2 : List Y)  → x ∈ els1
                   → inj₁ x ∈ (Data.List.map inj₁ els1 ++ Data.List.map inj₂ els2)
-          xi1 x ._ els2 here = here
+          xi1 x ._ els2 (here refl) = (here refl)
           xi1 x ._ els2 (there xi) = there (xi1 x _ els2 xi)
       hlp2 (inj₂ y) pr = xi2 y  els1 els2 (i2p2 y pr)
         where
@@ -165,7 +165,7 @@ sum {X} {P} {Y} {Q} (els1 , p2i1 , i2p1) (els2 , p2i2 , i2p2)
                     →  (els2 : List Y)  → y ∈ els2
                   → inj₂ y ∈ (Data.List.map inj₁ els1 ++ Data.List.map inj₂ els2)
           xi2 y [] [] ()
-          xi2 y [] (.y ∷ els2) here = here
+          xi2 y [] (.y ∷ els2) (here refl) = here refl
           xi2 y [] (x ∷ els2) (there pr) = there (xi2 y [] els2 pr)
           xi2 y (x ∷ els1) els2 pr = there (xi2 y els1 els2 pr)
 

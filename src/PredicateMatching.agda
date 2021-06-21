@@ -4,8 +4,8 @@ module PredicateMatching where
 open import Data.Bool hiding (_≟_)
 open import Data.Sum  hiding (map)
 open import Data.Product  hiding (map)
-open import Data.Maybe hiding (map ; All)
-open import Data.List
+open import Data.Maybe hiding (map)
+open import Data.List hiding (filter) renaming (boolFilter to filter)
 
 open import Relation.Binary.PropositionalEquality hiding (inspect)
 open import Relation.Binary.Core 
@@ -23,7 +23,7 @@ anySound : {X : Set} → (xs : List X) → (p : X → Bool)
   → any p xs ≡ true → Σ[ x ∈ X ] x ∈ xs × p x ≡ true
 anySound [] p ()
 anySound (x ∷ xs) p pr with inspect (p x) 
-anySound (x ∷ xs) p pr | it true x₁ rewrite x₁ = x , here , x₁
+anySound (x ∷ xs) p pr | it true x₁ rewrite x₁ = x , (here refl) , x₁
 anySound (x ∷ xs) p pr | it false x₁ rewrite x₁ with anySound xs p pr 
 ... | z1 , z2 , z3 = z1 , there z2 , z3 
 
@@ -31,7 +31,7 @@ anySound (x ∷ xs) p pr | it false x₁ rewrite x₁ with anySound xs p pr
 anyComplete : {X : Set} → (xs : List X) → (p : X → Bool) 
   → ∀ x → x ∈ xs →  p x ≡ true → any p xs ≡ true
 anyComplete [] p x () px
-anyComplete (x ∷ xs) p .x here px rewrite px = refl
+anyComplete (x ∷ xs) p .x (here refl) px rewrite px = refl
 anyComplete (x ∷ xs) p x₁ (there xin) px with p x 
 anyComplete (x ∷ xs) p x₁ (there xin) px | true = refl
 anyComplete (x ∷ xs) p x₁ (there xin) px | false = anyComplete xs p x₁ xin px
@@ -46,9 +46,9 @@ joinPredsSound : {X : Set} → (pd : List (X → Bool)) → ∀ z
   → joinPreds pd z ≡ false 
   → ∀ p → p ∈ pd → p z ≡ false
 joinPredsSound [] z pr p ()
-joinPredsSound (x ∷ pd) z pr .x here with x z 
-joinPredsSound (x ∷ pd) z () .x here | true
-joinPredsSound (x ∷ pd) z pr .x here | false = refl
+joinPredsSound (x ∷ pd) z pr .x (here refl) with x z 
+joinPredsSound (x ∷ pd) z () .x (here refl) | true
+joinPredsSound (x ∷ pd) z pr .x (here refl) | false = refl
 joinPredsSound (x ∷ pd) z pr x₁ (there pin) with x z 
 joinPredsSound (x ∷ pd) z () x₁ (there pin) | true
 joinPredsSound (x ∷ pd) z pr x₁ (there pin) | false 
@@ -59,7 +59,7 @@ joinPredsComplete : {X : Set} → ∀ x → (pd1 : List (X → Bool))
   → (∀ p' → p' ∈ pd1 → p' x ≡ false) 
   → joinPreds pd1 x ≡ false
 joinPredsComplete x [] prop = refl
-joinPredsComplete x (x₁ ∷ pd1) prop rewrite prop x₁ here 
+joinPredsComplete x (x₁ ∷ pd1) prop rewrite prop x₁ (here refl) 
   = joinPredsComplete x pd1 (λ p' p'in → prop p' (there p'in))
 
 
@@ -227,7 +227,7 @@ isMatchedComplete : {X : Set} → (xs : List X) → (pds : List (X → Bool))
  →  Σ[ p ∈ (X → Bool) ] p ∈ pds × p x ≡ true
  → isMatched x pds ≡ true
 isMatchedComplete xs [] x xin (p1 , () , p3)
-isMatchedComplete xs (x ∷ pds) x₁ xin (.x , here , p3) rewrite p3 = refl
+isMatchedComplete xs (x ∷ pds) x₁ xin (.x , (here refl) , p3) rewrite p3 = refl
 isMatchedComplete xs (x ∷ pds) x₁ xin (x₂ , there p2 , p3) with x x₁ 
 ... | false = isMatchedComplete xs pds x₁ xin (x₂ , p2 , p3)
 ... | true = refl
@@ -274,7 +274,7 @@ allMatchedComplete : {X : Set} → (xs : List X) → (pds : List (X → Bool))
  → allMatched xs pds ≡ true
 allMatchedComplete [] pds prop = refl
 allMatchedComplete (x ∷ xs) pds prop 
-  rewrite isMatchedComplete (x ∷ xs) pds x here (prop x here)
+  rewrite isMatchedComplete (x ∷ xs) pds x (here refl) (prop x (here refl))
   = allMatchedComplete xs pds (λ x' x'in → prop x' (there x'in)) 
 
 
