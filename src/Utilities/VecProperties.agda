@@ -30,7 +30,6 @@ open import Level hiding (suc ; zero)
 open import Data.Vec.Properties hiding (map-cong)
 
 open import Utilities.FinProperties
-open import Utilities.BoolProperties
 open import Utilities.ListProperties
 open import Utilities.ListsAddition
 open import Utilities.Logic

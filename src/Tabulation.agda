@@ -15,8 +15,7 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.Core 
 open import Relation.Nullary
 
-open import Utilities.BoolProperties
-open import Utilities.ListProperties hiding (end)
+open import Utilities.ListProperties
 open import Utilities.ListsAddition
 open import Utilities.Logic
 
@@ -47,14 +46,14 @@ fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , y') , z2 , refl with nd
 ... | inj₁ k with notNoDup {_} {d} 
                      (map (λ r → proj₁ r) (o1 ++ (x , y) ∷ o2)) 
                      (map proj₁ o1 , map proj₁ ((x , y) ∷ o2) , x , 
-                        maphom o1 ((x , y) ∷ o2) proj₁ , 
+                        map-++-commute proj₁ o1 ((x , y) ∷ o2) , 
                           ∃-after-map (x , y') o1 proj₁ k , here refl) nd 
 ... | ()
 fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , .y) , z2 , refl 
   | q1 , q2 , q3 , q4 , q5 | b | v | o1 , o2 , o3 | inj₂ (here refl) = refl
 fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , y') , z2 , refl 
   | q1 , q2 , q3 , q4 , q5 | b | v | o1 , o2 , o3 | inj₂ (there k) 
-  rewrite ++-assoc o1 ((x , y) ∷ []) o2 with ∈-split {_} {(o1 ++ (x , y) ∷ [])} {o2} z2
+  rewrite sym (++-assoc o1 ((x , y) ∷ []) o2) with ∈-split {_} {(o1 ++ (x , y) ∷ [])} {o2} z2
 fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , y') , z2 , refl 
   | q1 , q2 , q3 , q4 , q5 | b | v | o1 , o2 , o3 | inj₂ (there k) | inj₁ xyin1 
   with ∈-split {_} {o1} {(x , y) ∷ []}  xyin1 
@@ -62,10 +61,10 @@ fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , y') , z2 , refl
   | q1 , q2 , q3 , q4 , q5 | b | v | o1 , o2 , o3 | inj₂ (there k) | inj₁ xyin1  
   | inj₁ o with notNoDup {_} {d} (map (λ r → proj₁ r) ((o1 ++ (x , y) ∷ []) ++ o2)) 
      (map proj₁ (o1 ++ (x , y) ∷ []) , 
-       map proj₁ o2 , x , maphom (o1 ++ (x , y) ∷ []) o2 proj₁ , 
+       map proj₁ o2 , x , map-++-commute proj₁ (o1 ++ (x , y) ∷ []) o2 , 
          ∈-eq-cong x (map proj₁ o1 ++ x ∷ []) (map (λ r → proj₁ r) (o1 ++ (x , y) ∷ [])) 
-          (∈-weak-lft {_} {map proj₁ o1} {x ∷ []} {x} (here refl)) 
-             (sym (maphom o1 ((x , y) ∷ [])  proj₁))  , 
+          (++⁺ʳ (map proj₁ o1) (here refl)) 
+             (sym (map-++-commute proj₁ o1  ((x , y) ∷ [])))  , 
                ∃-after-map (x , y') o2 proj₁ k ) nd
 ... | ()
 fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , .y) , z2 , refl 
@@ -82,10 +81,10 @@ fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , y') , z2 , refl
   | inj₂ xyin1 | inp with notNoDup {_} {d} 
      (map (λ r → proj₁ r) ((o1 ++ (x , y) ∷ []) ++ o2)) 
        (map proj₁ (o1 ++ (x , y) ∷ []) , map (λ r → proj₁ r) o2 , x , 
-         maphom (o1 ++ (x , y) ∷ []) o2 proj₁ , ∈-eq-cong x (map proj₁ o1 ++ x ∷ []) 
+         map-++-commute proj₁ (o1 ++ (x , y) ∷ []) o2 , ∈-eq-cong x (map proj₁ o1 ++ x ∷ []) 
           (map (λ r → proj₁ r) (o1 ++ (x , y) ∷ [])) 
-            (∈-weak-lft {_} {map proj₁ o1} {x ∷ []} {x} (here refl)) 
-              (sym (maphom o1 ((x , y) ∷ [])  proj₁)) , inp) nd
+            (++⁺ʳ (map proj₁ o1) (here refl)) 
+              (sym (map-++-commute proj₁ o1  ((x , y) ∷ []))) , inp) nd
 fromListPartialSound d xs nd x y xyin | yes x₁ | (.x , y') , z2 , refl 
   | q1 , q2 , q3 , q4 , q5 | b | v 
   | o1 , o2 , o3 | inj₂ (there k)  | inj₂ xyin1 | inp | () 
@@ -101,13 +100,10 @@ fromList : {X Y : Set} → (kf : ListableNoDup X)
   → NoDup (map proj₁ xs) 
   → X → Y
 fromList (els , elsC , nd) xs sub nodup el 
-  with inspect (fromListPartial (lstblEq (els , elsC)) xs nodup el)
-fromList (els , elsC , nd) xs sub nodup el | it (just y) z = y
-fromList (els , elsC , nd) xs sub nodup el | it nothing z with sub {el} (elsC el)
-fromList (els , elsC , nd) xs sub nodup el | it nothing z 
-  | o with   map∃ (lstblEq (els , elsC)) el proj₁ xs o
-fromList (els , elsC , nd) xs sub nodup .el | it nothing z 
-  | o | (el , proj₂) , mp2 , refl 
+  with fromListPartial (lstblEq (els , elsC)) xs nodup el | inspect (fromListPartial (lstblEq (els , elsC)) xs nodup) el
+fromList (els , elsC , nd) xs sub nodup el | (just y) | [ z ] = y
+fromList (els , elsC , nd) xs sub nodup el | nothing | [ z ] with map∃ (lstblEq (els , elsC)) el proj₁ xs (sub (elsC el))
+... | (el , proj₂) , mp2 , refl 
   rewrite fromListPartialSound (lstblEq (els , elsC)) 
   xs nodup el proj₂ mp2 with z
 ... | ()
@@ -121,13 +117,12 @@ fromListSound : {X Y : Set} → (kf : ListableNoDup X)
   → ∀ x y → (x , y) ∈ xs
   → fromList kf xs sb nd x ≡ y
 fromListSound (els , elsComp , nd) xs sub nodup el y pin 
-  with inspect (fromListPartial (lstblEq (els , elsComp)) xs nodup el)
-fromListSound (els , elsComp , nd) xs sub nodup el y pin | it (just y') x₁ 
+  with fromListPartial (lstblEq (els , elsComp)) xs nodup el | inspect (fromListPartial (lstblEq (els , elsComp)) xs nodup) el
+... | (just y') | [ x₁ ]
   = cong (maybe (λ x → x) y') (trans (sym x₁) 
   (fromListPartialSound (lstblEq (els , elsComp)) xs nodup el y pin))
-fromListSound (els , elsComp , nd) xs sub nodup el y pin | it nothing z 
-  with map∃ (lstblEq (els , elsComp)) el proj₁ xs (sub {el} (elsComp el))
-fromListSound (els , elsComp , nd) xs sub nodup el y pin | it nothing z 
+... | nothing | [ z ] with map∃ (lstblEq (els , elsComp)) el proj₁ xs (sub {el} (elsComp el))
+fromListSound (els , elsComp , nd) xs sub nodup el y pin | nothing | [ z ]
   | (.el , proj₂) , p2 , refl with trans (sym z) 
   (fromListPartialSound (lstblEq (els , elsComp)) xs nodup el y pin)
 ... | ()
@@ -158,9 +153,8 @@ toListComplete : {X Y : Set} → (f : X → Y)
   → (x , y) ∈ toList xs f
 toListComplete f xs x y xin fx with ∃-split x xs xin
 ... | o1 , o2 , o3  rewrite o3 
-  | maphom o1 (x ∷ o2) (λ x₁ → x₁ , f x₁) 
-  | fx = ∈-weak-lft {_} {(map (λ x₁ → x₁ , f x₁) o1)} 
-         {(x , y) ∷ map (λ x₁ → x₁ , f x₁) o2} (here refl)
+  | map-++-commute (λ x₁ → x₁ , f x₁) o1 (x ∷ o2) 
+  | fx = ++⁺ʳ (map (λ x₁ → x₁ , f x₁) o1) (here refl)
 
 
 toListSoundHelp : {X Y : Set} → (f : X → Y) 
@@ -179,16 +173,16 @@ toListSound : {X Y : Set} → (f : X → Y)
   → ∀ x y → (x , y) ∈ toList xs f
   → f x ≡ y
 toListSound f xs nd x y xyin with nd x (toListSoundHelp f xs x y xyin)
-... | o1 , o2 , o3 , o4 , o5  rewrite o3 | maphom o1 (x ∷ o2) (λ x₁ → x₁ , f x₁)  
+... | o1 , o2 , o3 , o4 , o5  rewrite o3 | map-++-commute (λ x₁ → x₁ , f x₁) o1 (x ∷ o2)  
  with ∈-split {_} {map (λ x₁ → x₁ , f x₁) o1} 
       {(x , f x) ∷ map (λ x₁ → x₁ , f x₁) o2} xyin
 ... | inj₁ z with map-cong proj₁ (x , y) (map (λ x₁ → x₁ , f x₁) o1) z 
-... | xin rewrite map-pr1 o1 f = ex-falso-quodlibet (o4 xin)
+... | xin rewrite map-pr1 o1 f = ⊥-elim (o4 xin)
 toListSound f xs nd x .(f x) xyin | o1 , o2 , o3 , o4 , o5  
   | inj₂ (here refl) = refl
 toListSound f xs nd x y xyin | o1 , o2 , o3 , o4 , o5 | inj₂ (there z) 
   with map-cong proj₁ (x , y) (map (λ x₁ → x₁ , f x₁) o2) z 
-... | xin rewrite map-pr1 o2 f = ex-falso-quodlibet (o5 xin)
+... | xin rewrite map-pr1 o2 f = ⊥-elim (o5 xin)
 
 
 Tbl : Set → Set → Set

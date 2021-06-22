@@ -18,7 +18,6 @@ open import Function
 
 open import Utilities.Logic 
 open import Utilities.ListProperties
-open import Utilities.NatProperties
 
 
 
@@ -84,8 +83,8 @@ elementsOfComplete fs e = proj₂ (fsListable fs) e
 
 
 ndlft : {X : Set} → (xs : List X) → NoDupInd xs → NoDupInd (lft xs)
-ndlft .[] end = end
-ndlft {X} (x ∷ xs) (x₁ ::: nd) = hlp1 ::: nd2' _ (lft _) hlp2 (ndlft _ nd)
+ndlft Data.List.[] [] = []
+ndlft {X} (x Data.List.∷ xs) (x₁ ∷ nd) = ¬Any⇒All¬ (map (λ { (e , p) → e , there p }) (lft xs)) hlp1 ∷ nd2' _ (lft _) hlp2 (ndlft _ nd)
   where
 
    ∈b : ∀{a} → {X : Set a} → (y1 y2 : X) → (ys : List X) → (p1 p2 : y1 ∈ ys) 
@@ -172,10 +171,3 @@ _∪_ : {C : Set}{eq : DecEq C} {b1 b2 : Bool}
   → FiniteSubSet C eq b1 → FiniteSubSet C eq b2
   → FiniteSubSet C eq (b1 ∧ b2)
 _∪_ {C} {eq = _==_} {b1} {b2}  X Y = fromList (listOf X ++ listOf Y) _
-
-
-
-
-
-
-

@@ -4,7 +4,7 @@ module Utilities.ListsAddition where
 open import Data.List hiding (filter)
 open import Data.Bool hiding (_∨_)
 open import Relation.Binary.PropositionalEquality hiding ([_])
-open import Utilities.Logic
+open import Utilities.Logic hiding ([_])
 
 open import Utilities.ListProperties
 
@@ -37,11 +37,11 @@ diff dec xs (y ∷ ys) = diff dec (remEl dec xs y)  ys
 
 
 remDup2 : {X : Set} → DecIn X → List X → List X
-remDup2 ∈? xs = foldl (λ res e → if dec2bool (∈? e res) 
+remDup2 ∈? xs = foldl (λ res e → if isYes (∈? e res) 
                                   then res else e ∷ res) [] xs
 
 remDup : {X : Set} → DecIn X → List X → List X
-remDup ∈? xs = foldr (λ e res → if dec2bool (∈? e res) 
+remDup ∈? xs = foldr (λ e res → if isYes (∈? e res) 
                                   then res else e ∷ res) [] xs
 
 open import Relation.Binary 
@@ -79,7 +79,7 @@ remDupCorrect ∈? (x ∷ xs) .x (here refl) | no ¬p = [] , _ , refl , (λ { ()
 remDupCorrect ∈? (x ∷ xs) x₁ (there x₂) | no ¬p with remDupCorrect ∈? xs x₁ x₂  | in2eq ∈? x₁ x 
 remDupCorrect ∈? (x ∷ xs) .x (there x₂) | no ¬p | o1 , o2 , o3 , o4 , o5 
   | yes refl rewrite o3 
-  = ex-falso-quodlibet (¬p (∈-weak-lft {_} {o1} {x ∷ o2} (here refl)))
+  = ⊥-elim (¬p (++⁺ʳ o1 (here refl)))
 remDupCorrect {X} ∈? (x ∷ xs) x₁ (there x₂) 
   | no ¬p₁ 
   | o1 , o2 , o3 , o4 , o5 

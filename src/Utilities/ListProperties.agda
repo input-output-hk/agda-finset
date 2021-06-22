@@ -1,14 +1,16 @@
-
 module Utilities.ListProperties where
 
 open import Relation.Nullary
 open import Relation.Binary
 open import Relation.Nullary.Decidable hiding (map)
 open import Data.List hiding (filter) renaming (boolFilter to filter)
+open import Data.List.Properties hiding (map-cong)
+open import Data.List.Properties using (++-assoc; ++-cancelˡ; map-++-commute; ++-identityʳ) public
 open import Data.List.Membership.Propositional public
 open import Data.List.Relation.Unary.Any public
-  using (Any; here; there)
-open import Relation.Binary.PropositionalEquality as PropEq hiding ([_] ; inspect)
+  using (Any; here; there; any?)
+open import Data.List.Relation.Unary.Any.Properties using (++⁺ʳ; ++⁺ˡ; ++⁻) public
+open import Relation.Binary.PropositionalEquality
 open import Data.Product hiding (map)
 open import Data.Empty
 open import Data.Nat hiding (_<_)
@@ -16,35 +18,20 @@ open import Utilities.Logic
 open import Utilities.ArithmeticProperties
 open import Data.Sum hiding (map)
 open import Level hiding (suc)
+open import Data.List.Relation.Unary.Unique.Propositional renaming (Unique to NoDupInd) public
+open import Data.List.Relation.Unary.All.Properties using (All¬⇒¬Any; ¬Any⇒All¬) public
 
 DecIn : ∀ X → Set
 DecIn X = Decidable (_∈_ {A = X})
 
 eq2in : {X : Set} → DecEq X → DecIn X
-eq2in d x [] = no (λ { () })
-eq2in d x (x₁ ∷ xs) with d x x₁ 
-eq2in d x (.x ∷ xs) | yes refl = yes (here refl)
-eq2in d x (x₁ ∷ xs) | no ¬p with eq2in d x xs 
-eq2in d x (x₁ ∷ xs) | no ¬p | yes p = yes (there p)
-eq2in d x (x₁ ∷ xs) | no ¬p₁ | no ¬p = no (λ prin2 → f _ _ _ ¬p₁ ¬p prin2)
- where
-   f : {A : Set} → (x x₁ : A) → (xs : List A) → (x ≡ x₁ → ⊥) → ¬ x ∈ xs → ¬ x ∈ (x₁ ∷ xs)
-   f x₂ x₃ xs₁ pr prin (here px) = pr px
-   f x₂ x₃ xs₁ pr prin (there h) = prin h
+eq2in d x = any? (d x)
 
 
 in2eq : {X : Set} → DecIn X → DecEq X
 in2eq ∈? x1 y1 with ∈? x1 (y1 ∷ [])
 ... | yes (here px) = yes px
 ... | no ¬p = no (λ pr → ¬p (subst (λ h → x1 ∈ (h ∷ [])) pr (here refl)))
-
-
-infixr 5 _:::_
-data NoDupInd {X : Set} : List X → Set where
-  end : NoDupInd []
-  _:::_ : {xs : List X} → {x : X} → (¬ x ∈ xs) 
-           → NoDupInd xs → NoDupInd (x ∷ xs)
-
 
 
 NoDup : {a : Level} {X : Set a} → List X → Set a
@@ -56,21 +43,21 @@ NoDup {X = X} xs = (x : X) → x ∈ xs → Σ[ ys ∈ List X ]
 
 
 NoDupInd-corr : {X : Set} → (xs : List X) → NoDupInd xs → NoDup xs
-NoDupInd-corr (x ∷ xs) (_:::_ .{xs} .{x} x₁ ndxs) x₂ (here h) rewrite h = [] , xs , refl , (λ { ( ) }) , x₁
-NoDupInd-corr (x ∷ xs) (_:::_ .{xs} .{x} x₁ ndxs) x₂ (there x₃) with NoDupInd-corr xs ndxs x₂ x₃ 
-... | o1 , o2 , o3 , o4 , o5 = x ∷ o1 , o2 , cong (_∷_ x) o3 , h x x₂ xs o1 x₃ x₁  o4 , o5
+NoDupInd-corr (x ∷ xs) (x₁ ∷ _) x₂ (here h) rewrite h = [] , xs , refl , (λ ()) , All¬⇒¬Any x₁
+NoDupInd-corr (x ∷ xs) (x₁ ∷ h) x₂ (there h') with NoDupInd-corr xs h x₂ h'
+... | o1 , o2 , o3 , o4 , o5 = x ∷ o1 , o2 , cong (_∷_ x) o3 , helper x x₂ xs o1 h' (All¬⇒¬Any x₁) o4 , o5
   where
-    h : {X : Set} → (x x₂ : X) → (xs o1 : List X) 
+    helper : {X : Set} → (x x₂ : X) → (xs o1 : List X) 
      → x₂ ∈ xs → (x ∈ xs → ⊥) → (x₂ ∈ o1 → ⊥) →  x₂ ∈ (x ∷ o1) → ⊥
-    h x₄ x₅ xs₁ o6 xin xinn xinn2 (here h) rewrite h = xinn xin
-    h x₄ x₅ xs₁ o6 xin xinn xinn2 (there xin2) = xinn2 xin2
+    helper x₄ x₅ xs₁ o6 xin xinn xinn2 (here h) rewrite h = xinn xin
+    helper x₄ x₅ xs₁ o6 xin xinn xinn2 (there xin2) = xinn2 xin2
 
 
 NoDupInd-pr : {X : Set} → (x : X) → (xs : List X) → (p1 p2 : x ∈ xs) → NoDupInd xs → p1 ≡ p2
-NoDupInd-pr x _ (here refl) (here refl) (x₁ ::: h) = refl
-NoDupInd-pr x _ (here refl) (there p2) (x₁ ::: h) = ⊥-elim (x₁ p2)
-NoDupInd-pr x _ (there p1) (here refl) (x₁ ::: h) = ⊥-elim (x₁ p1)
-NoDupInd-pr x _ (there p1) (there p2) (x₁ ::: h) = cong there (NoDupInd-pr x _ p1 p2 h)
+NoDupInd-pr x _ (here refl) (here refl) (x₁ ∷ h) = refl
+NoDupInd-pr x _ (here refl) (there p2) (x₁ ∷ h) = ⊥-elim (All¬⇒¬Any x₁ p2)
+NoDupInd-pr x _ (there p1) (here refl) (x₁ ∷ h) = ⊥-elim  (All¬⇒¬Any x₁ p1)
+NoDupInd-pr x _ (there p1) (there p2) (x₁ ∷ h) = cong there (NoDupInd-pr x _ p1 p2 h)
 
 lem : {X : Set} → (x : X) → (xs ys ps : List X)
   →  x ∷ xs ≡ ys ++ x ∷ ps → (x ∈ ys → ⊥) → ys ≡ []
@@ -86,34 +73,22 @@ NoDupInd-corr2' xs x nd .x pin | [] , .xs , refl , q4 , q5 with q5 pin
 NoDupInd-corr2' .(q1 ++ p ∷ q2) x nd p pin | .x ∷ q1 , q2 , refl , q4 , q5 = q1 , q2 , refl , (λ pi → q4 (there pi)) , q5
 
 NoDupInd-corr2 : {X : Set} → (xs : List X) → NoDup xs → NoDupInd xs
-NoDupInd-corr2 [] nd = end
+NoDupInd-corr2 [] nd = []
 NoDupInd-corr2 (x ∷ xs) nd with nd x (here refl)
 ... | ys , ps , z1 , z2 , z3 with lem x xs ys ps z1 z2 
-... | ro rewrite ro =  (λ pr → z3 (subst (λ h → x ∈ h) (cong (drop 1) z1) pr)) ::: NoDupInd-corr2 _ (NoDupInd-corr2' xs x nd)
+... | ro rewrite ro = ¬Any⇒All¬ xs (λ pr → z3 (subst (λ h → x ∈ h) (cong (drop 1) z1) pr)) ∷ NoDupInd-corr2 _ (NoDupInd-corr2' xs x nd)
 
 
 
 
-
-list-= : {X : Set} → (p1 o2 o3 : List X) 
- → p1 ++ o2 ≡ p1 ++ o3 → o2 ≡ o3
-list-= [] o2 o3 pr = pr
-list-= (x ∷ p1) o2 o3 pr = list-= p1 o2 o3 (cong (drop 1) pr)
 
 
 list-eq : {C : Set} → Decidable (_≡_ {A = C}) → Decidable (_≡_ {A = List C})
-list-eq d [] [] = yes refl
-list-eq d [] (x ∷ ys) = no (λ { () })
-list-eq d (x ∷ xs) [] = no (λ { () })
-list-eq d (x ∷ xs) (x₁ ∷ ys) with d x x₁ 
-list-eq d (x ∷ xs) (.x ∷ ys) | yes refl with list-eq d xs ys 
-list-eq d (x ∷ xs) (.x ∷ .xs) | yes refl | yes refl = yes refl
-list-eq d (x ∷ xs) (.x ∷ ys) | yes refl | no ¬p = no (λ pr → ¬p (cong (drop 1) pr))
-list-eq d (x ∷ xs) (x₁ ∷ ys) | no ¬p = no (λ pr → ¬p (cong (λ { (z ∷ zs) → z ; _ → x }) pr))
+list-eq = ≡-dec
 
 
 
-eq-cons : {X : Set} → (x y : X) → (xs ys : List X) → (x ∷ xs) ≡ (y ∷ ys) → x ≡ y
+eq-cons : {X : Set} → (x y : X) → (xs ys : List X) → (x Data.List.∷ xs) ≡ (y Data.List.∷ ys) → x ≡ y
 eq-cons x .x xs .xs refl = refl
 
 
@@ -129,21 +104,6 @@ eq-cons x .x xs .xs refl = refl
    where
      h : f x ∷ map f xs1 ≡ x₁ ∷ ys1
      h  = subst (λ h → h ∷ map f xs1 ≡ x₁ ∷ ys1) (sym eq) (cong (_∷_ x₁) yseq1) 
-
-
-
-maphom : {A B : Set} → (xs ys : List A) → (f : A → B) →  map f (xs ++ ys) ≡ map f xs ++ map f ys
-maphom [] ys f = refl
-maphom (x ∷ xs) ys f = cong (_∷_ _) (maphom xs ys f) 
-
-++-assoc : {A : Set} → (a b c : List A) → a ++ b ++ c ≡ (a ++ b) ++ c
-++-assoc [] b c = refl
-++-assoc (x ∷ a) b c = cong (_∷_ x) (++-assoc a b c)
-
-++-rgt-id : {X : Set}(xs : List X) →  xs ++ [] ≡ xs
-++-rgt-id [] = refl
-++-rgt-id (x ∷ xs) = cong (_∷_ x) (++-rgt-id xs )
-
 
 
 ∈len : {X : Set} → {x : X} → {xs : List X} → x ∈ xs → ℕ
@@ -163,43 +123,24 @@ maphom (x ∷ xs) ys f = cong (_∷_ _) (maphom xs ys f)
 ∈-cong x .(_ ∷ _) f (here refl) = here refl
 ∈-cong x .(_ ∷ _) f (there h) = there (∈-cong x _ f h)
 
-∈-weak-lft : {X : Set}{xs₁ xs₂ : List X}{x : X} → x ∈ xs₂ 
- → x ∈ (xs₁ ++ xs₂)
-∈-weak-lft {X} {[]} xin = xin
-∈-weak-lft {X} {x ∷ xs₁} xin = there (∈-weak-lft {_} {xs₁} xin)
-
-
-∈-weak-lft-pos : {X : Set}{x : X}(xs₁ xs₂ : List X)
+∈-++⁺ʳ-pos : {X : Set}{x : X}(xs₁ xs₂ : List X)
  → (pin : x ∈ xs₂)
- → ∈len (∈-weak-lft {_} {xs₁} {xs₂} pin) ≡ (length xs₁) + (∈len pin)
-∈-weak-lft-pos [] xs₂ pin = refl
-∈-weak-lft-pos (x₁ ∷ xs₁) xs₂ pin = cong suc (∈-weak-lft-pos xs₁ xs₂  pin)
+ → ∈len (++⁺ʳ xs₁ pin) ≡ (length xs₁) + (∈len pin)
+∈-++⁺ʳ-pos [] xs₂ pin = refl
+∈-++⁺ʳ-pos (x₁ ∷ xs₁) xs₂ pin = cong suc (∈-++⁺ʳ-pos xs₁ xs₂  pin)
 
-postulate ∈-weak-lft-pos' : {X : Set}{x : X}(xs₁ xs₂ : List X) → (pin : x ∈ xs₂) → ∈len (∈-weak-lft {_} {xs₁} {xs₂} pin) ≡ (∈len pin) + (length xs₁)
+postulate ∈-++⁺ʳ-pos' : {X : Set}{x : X}(xs₁ xs₂ : List X) → (pin : x ∈ xs₂) → ∈len (++⁺ʳ xs₁ pin) ≡ (∈len pin) + (length xs₁)
 
-
-
-∈-weak-rgt : {X : Set}{b c : List X}{a : X} → a ∈ c → a ∈ (c ++ b)
-∈-weak-rgt (here refl) = here refl
-∈-weak-rgt (there i) = there (∈-weak-rgt i)
 
 ∈-split : {X : Set} →  {xs₁ xs₂ : List X} → {x : X}
  →  x ∈ (xs₁ ++ xs₂) 
  → (x ∈ xs₁) ⊎ (x ∈ xs₂)
-∈-split {X} {[]} xin = inj₂ xin
-∈-split {X} {x ∷ xs₁}  (here refl) = inj₁ (here refl)
-∈-split {X} {x ∷ xs₁}  (there xin) with ∈-split {X} {xs₁} xin 
-∈-split {X} {x₂ ∷ xs₁} (there xin) | inj₁ x₁ = inj₁ (there x₁)
-∈-split {X} {x₁ ∷ xs₁} (there xin) | inj₂ y = inj₂ y
+∈-split = ++⁻ _
 
 ∈-join : {X : Set} → {xs₁ xs₂ : List X} → {x : X}
  → (x ∈ xs₁) ⊎ (x ∈ xs₂)
  →  x ∈ (xs₁ ++ xs₂) 
-∈-join {X} {[]} (inj₂ y) = y
-∈-join {X} {x ∷ xs} (inj₁ (here refl)) = here refl
-∈-join {X} {x ∷ xs} (inj₁ (there x₁)) = there (∈-join (inj₁ x₁))
-∈-join {X} {x ∷ xs} (inj₂ y) = there (∈-join (inj₂ y))
-
+∈-join = [ ++⁺ˡ , (++⁺ʳ _) ]′
 
 ∃-after-map : {X Y : Set} → (d : X) →  (xs : List X) → (f : X → Y)
  → d ∈ xs → (f d) ∈ (map f xs)
@@ -244,11 +185,11 @@ foldl-unf : {A B : Set} → (ys : List B) → (l : List A)
   → (f : A → List B)
   → foldl (λ res el → res ++ f el) ys l ≡ 
       ys ++ foldl (λ res el → res ++ f el  ) [] l
-foldl-unf ys [] f =  sym (++-rgt-id _)
+foldl-unf ys [] f =  sym (++-identityʳ _)
 foldl-unf ys (x ∷ l) f rewrite 
  foldl-unf (ys ++ f x)  l f 
  | foldl-unf (f x) l f 
- = sym (++-assoc ys (f x) (foldl (λ res el → res ++ f el) [] l)) 
+ = ++-assoc ys (f x) (foldl (λ res el → res ++ f el) [] l)
 
 
 -- returning element from the list (with default value)
@@ -299,11 +240,11 @@ filter-nest : {X : Set} → (xs : List X)
  → (p q : X → Bool)
  → filter p (filter q xs) ≡ filter (λ e → p e ∧ q e) xs
 filter-nest [] p q = refl
-filter-nest (x ∷ xs) p q with inspect  (q x) | inspect (p x)
-filter-nest (x ∷ xs) p q | it true x₁ | it true g rewrite x₁ | g = cong (_∷_ x) (filter-nest xs p q)
-filter-nest (x ∷ xs) p q | it true x₁ | it false g rewrite x₁ | g = filter-nest xs p q
-filter-nest (x ∷ xs) p q | it false x₁ | it true g rewrite x₁ | g = filter-nest xs p q
-filter-nest (x ∷ xs) p q | it false x₁ | it false g rewrite x₁ | g = filter-nest xs p q 
+filter-nest (x ∷ xs) p q with q x | inspect q x | p x | inspect p x
+... | false | [ eq ] | false | [ eq₁ ] rewrite eq | eq₁ = filter-nest xs p q
+... | false | [ eq ] | true | [ eq₁ ] rewrite eq | eq₁ = filter-nest xs p q
+... | true | [ eq ] | false | [ eq₁ ] rewrite eq | eq₁ = filter-nest xs p q
+... | true | [ eq ] | true | [ eq₁ ] rewrite eq | eq₁ = cong (_∷_ x) (filter-nest xs p q)
 
 filter-id : {X : Set} → (xs : List X) → filter (λ e → true) xs ≡ xs
 filter-id [] = refl
@@ -323,12 +264,11 @@ filter-el : {X : Set} → (x : X) → (xs : List X)
   → (p : X → Bool)
   → x ∈ filter p xs → p x ≡ true
 filter-el x [] p ()
-filter-el x (x₁ ∷ xs) p xin with inspect (p x₁) 
-filter-el x₂ (x₁ ∷ xs) p xin | it true x rewrite x with xin 
-filter-el x₁ (.x₁ ∷ xs) p xin | it true x | (here refl) = x
-filter-el x₂ (x₁ ∷ xs) p xin | it true x |  there xin' = filter-el x₂ xs p xin'
-filter-el x₂ (x₁ ∷ xs) p xin | it false x rewrite x = filter-el x₂ xs p xin
-
+filter-el x (x₁ ∷ xs) p xin with p x₁ | inspect p x₁
+... | false | _ = filter-el x xs p xin
+... | true | [ eq ] with xin
+... | here refl = eq
+... | there h = filter-el x xs p h
 
 
 filter-in2 : {X : Set} → (xs : List X) → ∀ x → (p : X → Bool) → x ∈ xs → p x ≡ true → x ∈ filter p xs
@@ -580,21 +520,20 @@ countNoDup d xs x nd xin  with nd x  xin
 ... | no p with p refl 
 ... | ()
 
-open import Utilities.NatProperties
 notNoDup : {X : Set} → {d : DecEq X} → (xs : List X) 
   → (Σ[ ys ∈ List X ] 
       Σ[ zs ∈ List X ] 
       Σ[ x ∈ X ] xs ≡ ys ++ zs × (x ∈ ys) × (x ∈ zs)) 
   → ¬ NoDup xs
 notNoDup {_} {d} xs (proj₁ , proj₂ , proj₃ , proj₄ , proj₅ , proj₆) nd 
-  with nd proj₃ (subst (λ z → proj₃ ∈ z) (sym proj₄) (∈-weak-lft {_} {proj₁} {proj₂} {proj₃} proj₆)) 
+  with nd proj₃ (subst (λ z → proj₃ ∈ z) (sym proj₄) (++⁺ʳ proj₁ proj₆)) 
 ... | o1 , o2 , o3 , o4 , o5  rewrite proj₄ with cong (count d proj₃) o3 
 ... | po rewrite countHom d proj₁ proj₂ proj₃ | countHom d o1 (proj₃ ∷ o2) proj₃  with d proj₃ proj₃ 
 ... | no p = p refl
 ... | yes p rewrite count∉ d o1 proj₃ o4 | count∉ d o2 proj₃ o5 with 
  count∈ d proj₁ proj₃ proj₅ | count∈ d proj₂ proj₃ proj₆
-... | z , zp | w , wp  rewrite zp | wp | +-com z (suc w) with po 
-... | () 
+... | z , zp | w , wp  rewrite zp | wp | +-comm z (suc w) with po 
+... | ()
 
 
 nodup+dup : {X : Set} → DecEq X → (xs : List X) → NoDup+Dup xs
@@ -633,12 +572,12 @@ nodup+dup dec (x₁ ∷ xs)  | inj₂ (ys , zs , e , p , q1 , q2) = inj₂ (x₁
 
 
 nodupDec2 : {X : Set} → DecEq X → (xs : List X) → Dec (NoDupInd xs)
-nodupDec2 eq [] = yes end
+nodupDec2 eq [] = yes []
 nodupDec2 eq (x ∷ xs) with nodupDec2 eq xs 
 nodupDec2 eq (x ∷ xs) | yes p with eq2in eq x xs 
-nodupDec2 eq (x ∷ xs) | yes p₁ | yes p = no (λ { (x₁ ::: nd) → x₁ p })
-nodupDec2 eq (x ∷ xs) | yes p | no ¬p = yes (¬p ::: p)
-nodupDec2 eq (x ∷ xs) | no ¬p = no (λ { (x₁ ::: nd) → ¬p nd } )
+nodupDec2 eq (x ∷ xs) | yes p₁ | yes p = no (λ { (x₁ ∷ nd) → (All¬⇒¬Any x₁ p) })
+nodupDec2 eq (x ∷ xs) | yes p | no ¬p = yes (¬Any⇒All¬ xs ¬p ∷ p)
+nodupDec2 eq (x ∷ xs) | no ¬p = no (λ { (x₁ ∷ nd) → ¬p nd } )
 
 nodupDec : {X : Set} → DecEq X → (xs : List X) → Dec (NoDup xs)
 nodupDec d xs with nodup+dup d xs

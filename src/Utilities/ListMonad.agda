@@ -6,7 +6,6 @@ open import Data.List
 open import Relation.Binary.PropositionalEquality as PropEq hiding ([_])
 open import Utilities.ListProperties
 open import Data.Product
-open import Data.List renaming (_++_ to _+++_)
 open import Data.Sum
 
 
@@ -24,7 +23,7 @@ return a = [ a ]
 >>=split [] b f = refl
 >>=split (x ∷ a) b f rewrite foldl-unf (f x) (a ++ b) f 
  | foldl-unf (f x) a f 
- | sym (++-assoc (f x) (a >>= f) (b >>= f)) 
+ | ++-assoc (f x) (a >>= f) (b >>= f) 
  | >>=split a b f = refl
 
 {- monad laws-}
@@ -65,10 +64,10 @@ list-monad-ht : {X Y : Set}(e : Y)(xs : List X)(f : X → List Y) → (x : X)
  → e ∈ (xs >>= f)
 list-monad-ht e [] f x () ein
 list-monad-ht e (x ∷ xs) f .x (here refl) ein 
- rewrite >>=split [ x ] xs f = ∈-weak-rgt ein
+ rewrite >>=split [ x ] xs f = ++⁺ˡ ein
 list-monad-ht e (x ∷ xs) f x₁ (there xin) ein 
  rewrite >>=split [ x ] xs f 
- = ∈-weak-lft {_} {f x} (list-monad-ht e xs f x₁ xin ein)
+ = ++⁺ʳ (f x) (list-monad-ht e xs f x₁ xin ein)
 
 
 list-monad-th : {X Y : Set}(e : Y)(xs : List X)(f : X → List Y) 

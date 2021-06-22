@@ -36,8 +36,8 @@ union {X} {P} {Q} (els1 , p2i1 , i2p1) (els2 , p2i2 , i2p2)
     ∈-split' xs₁ xs₂ = ∈-split {_} {xs₁} {xs₂}
 
     p2i' : (x : X) → P x ⊎ Q x → x ∈ (els1 ++ els2)
-    p2i' x (inj₁ x₁) = ∈-weak-rgt {_} {els2} (i2p1 x x₁)
-    p2i' x (inj₂ y) = ∈-weak-lft {_} {els1} (i2p2 x y)
+    p2i' x (inj₁ x₁) = ++⁺ˡ (i2p1 x x₁)
+    p2i' x (inj₂ y) = ++⁺ʳ els1 (i2p2 x y)
 
     i2p' : (x : X) → x ∈ (els1 ++ els2) → P x ⊎ Q x
     i2p' x xin with ∈-split' els1 els2 xin  
@@ -56,7 +56,7 @@ rest x p (no ¬p) ()
 restOp : {X : Set} → (x : X) → (P : X → Set) → (pd : Dec (P x)) 
    → P x → ⌊ pd ⌋ ≡ true
 restOp x p (yes p₁) px = refl
-restOp x p (no ¬p) px = ex-falso-quodlibet (¬p px)
+restOp x p (no ¬p) px = ⊥-elim (¬p px)
 
 intersection : {X : Set} → {P Q : X → Set} 
   → (Pdec : (x : X) → Dec (P x))

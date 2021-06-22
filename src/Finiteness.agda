@@ -1,5 +1,3 @@
-
-
 module Finiteness where
 
 open import Relation.Binary 
@@ -12,7 +10,7 @@ open import Data.Bool hiding (_≟_)
 open import Data.Sum  hiding (map)
 open import Data.Product hiding (map)
 open import Data.Maybe hiding (map)
-open import Data.List hiding (lookup ; allFin)
+open import Data.List hiding (allFin; lookup)
 open import Data.Fin 
   hiding ( _≤_ ; _<_) 
   renaming (suc to fsuc ; zero to fzero ; pred to fpred)
@@ -21,20 +19,20 @@ open import Data.Nat hiding (_⊔_)
 open import Data.Unit hiding (_≤_ ; _≟_)
 open import Data.Vec 
   renaming (map to vmap ; _++_ to _++v_ ; _∷_ to _::_) 
-  hiding (drop ; take ; foldl ; foldr ; length)  
+  hiding (drop ; take ; foldl ; foldr ; length)
 open import Data.Vec.Membership.Propositional
   renaming (_∈_ to _∈v_)
 
 open import Function
 
-open import Level hiding (suc ; zero)
+open import Level
 
 open import Data.Vec.Properties hiding (map-cong)
+open import Data.List.Properties using (lookup-tabulate)
 
-open import Utilities.NatProperties
+open import Utilities.ArithmeticProperties
 open import Utilities.VecProperties
 open import Utilities.FinProperties
-open import Utilities.BoolProperties
 open import Utilities.ListProperties
 open import Utilities.ListsAddition
 open import Utilities.Logic
@@ -94,8 +92,8 @@ isEmpty? (_  , _ ) = false
 
 vnd : {X : Set} → {n : ℕ}  → (v : Vec X n) 
   → ((i j : Fin n) → lookup v i ≡ lookup v j → i ≡ j) → NoDupInd (toList v)
-vnd [] pr = end
-vnd {n = (suc n)} (x :: v) pr = hlp ::: vnd  v hlp2
+vnd [] pr = []
+vnd {n = (suc n)} (x :: v) pr = ¬Any⇒All¬ (toList v) hlp ∷ vnd  v hlp2
   where
     hlp : ¬ x ∈ toList v
     hlp pr'' with ∈∈v2 x v (∈∈v x v pr'') 
@@ -108,10 +106,17 @@ vnd {n = (suc n)} (x :: v) pr = hlp ::: vnd  v hlp2
         fsucl : {n : ℕ} → (i j : Fin n) → fsuc i ≡ fsuc j → i ≡ j
         fsucl i .i refl = refl
 
+lookup-fromList : {X : Set} → (l : List X) (i : Fin (length l)) → lookup (fromList l) i ≡ Data.List.lookup l i
+lookup-fromList (x ∷ l) fzero = refl
+lookup-fromList (x ∷ l) (fsuc i) = lookup-fromList l i
+
+vnd' : {X : Set} → (l : List X) 
+  → ((i j : Fin (length l)) → Data.List.lookup l i ≡ Data.List.lookup l j → i ≡ j) → NoDupInd l
+vnd' l pr = subst NoDupInd (toList∘fromList l) (vnd (fromList l) λ i j h → pr i j (subst₂ _≡_ (lookup-fromList l i) (lookup-fromList l j) h))
 
 
 nodupallfin : ∀ n → NoDupInd (allFinList n)
-nodupallfin n =  vnd (allFin n) hlp
+nodupallfin n = subst NoDupInd (sym allFinList-fromVec) (vnd (allFin n) hlp)
   where
     hlp : (i j : Fin n) → lookup (allFin n) i ≡ lookup (allFin n) j → i ≡ j
     hlp i j pr rewrite lookup-allFin i | lookup-allFin j = pr
@@ -123,27 +128,27 @@ all2 : {X Y : Set} → (f : Y → X) → (t : X → Y) → (l : List Y)
    → All l → All (map f l)
 all2 f t l pr all x with all (t x) 
 ... | o with ∃-split (t x) l o 
-... | ds1 , fs2 , pr' rewrite pr' | maphom ds1 (t x ∷ fs2) f | pr x 
-  = ∈-weak-lft {_} {map f ds1} {x ∷ map f fs2} {x} (here refl) 
+... | ds1 , fs2 , pr' rewrite pr' | map-++-commute f ds1 (t x ∷ fs2) | pr x 
+  = ++⁺ʳ (map f ds1) (here refl) 
 
 nd2 : {X Y : Set} → (f : Y → X) → (t : X → Y) → (l : List Y) 
   → (∀ y → t (f y) ≡ y)  
   → NoDupInd l → NoDupInd (map f l)
-nd2 f t .[] pr end = end
-nd2 f t ._ pr (x₁ ::: nd) 
-   = (λ pr' → x₁ (map-cong2 f t pr _ _ pr' )) ::: nd2 f t _ pr nd
+nd2 f t Data.List.[] pr end = []
+nd2 f t ._ pr (x₁ ∷ nd) 
+   = ¬Any⇒All¬ (map f _) (λ pr' → (All¬⇒¬Any x₁ (map-cong2 f t pr _ _ pr' ))) ∷ nd2 f t _ pr nd
 
 nd2' : {X Y : Set} → (f : Y → X)  → (l : List Y) 
   → (∀ y1 y2 → f y1 ≡ f y2 → y1 ≡ y2)  
   → NoDupInd l → NoDupInd (map f l)
-nd2' f  .[] pr end = end
-nd2' f  ._ pr (x₁ ::: nd) 
-   = (λ pr' → x₁ (map-cong3 f  pr _ _ pr' )) ::: nd2' f _ pr nd
+nd2' f  Data.List.[] pr [] = []
+nd2' f  ._ pr (x₁ ∷ nd) 
+   = ¬Any⇒All¬ (map f _) (λ pr' → All¬⇒¬Any x₁ (map-cong3 f  pr _ _ pr' )) ∷ nd2' f _ pr nd
 
 bij2nodup : {X : Set} → FinBij X → ListableNoDup X
 bij2nodup {X} (n , toFin , fromFin , inv1 , inv2) = 
     map fromFin (allFinList n) 
-  , all2 fromFin toFin _ inv1 (allFinListComplete n) 
+  , all2 fromFin toFin _ inv1 allFinListComplete
   , nd2 fromFin toFin (allFinList n) inv2 (nodupallfin n)
 
 
@@ -163,16 +168,16 @@ nodup2bij {X} (xs , all , nd) = length xs , toFin , fromFin , inv1 , inv2
     inv1 x rewrite convbf xs (x , all x) = refl
 
     inv2 : (y : Fin (length xs)) → toFin (fromFin y) ≡ y
-    inv2 y with inspect (convb xs y)
-    ... | it (q1 , q2) p  rewrite p | NoDupInd-pr  q1 xs (all q1) q2 nd 
-     = subst (λ h → convf xs h ≡ y) p (convfb xs y)
+    inv2 y with convb xs y | inspect (convb xs) y
+    ... | q1 , q2 | [ eq ] rewrite eq | NoDupInd-pr  q1 xs (all q1) q2 nd
+      = subst (λ h → convf xs h ≡ y) eq (convfb xs y)
 
 
 
 surj2lstbl : {X : Set} → FinSurj X → Listable X
 surj2lstbl {X} (n , toFin , fromFin , inv)  = 
   map fromFin (allFinList n)  
-  , all2 fromFin toFin _ inv (allFinListComplete n) 
+  , all2 fromFin toFin _ inv allFinListComplete 
 
 
 lstbl2surj : {X : Set} → Listable X → FinSurj X
@@ -254,11 +259,11 @@ equality1 : {X : Set}
    → ListableSubset X P 
    → DecEqRest P
 equality1 P Ppr (list , to , from) x1 x2 px1 px2 
-  with inspect (from x1 px1) | inspect (from x2 px2)
-... | it x1in x1inprf | it x2in x2inprf 
-  with inspect (∃-split x1 list x1in) | inspect (∃-split x2 list x2in)
-... | it (p1 , p2 , p3) pprf  | it (q1 , q2 , q3) qprf  
-  with ≤-pr' (length p1) (length q1) 
+  with from x1 px1 | inspect (from x1) px1 | from x2 px2 | inspect (from x2) px2
+... | x1in | [ x1inprf ] | x2in | [ x2inprf ]
+  with ∃-split x1 list x1in | inspect (∃-split x1 list) x1in | ∃-split x2 list x2in | inspect (∃-split x2 list) x2in
+... | (p1 , p2 , p3) | [ pprf ] | (q1 , q2 , q3) | [ qprf ]
+  with ≤-pr (length p1) (length q1) 
 ... | inj₁ p1<q1  with list-div (length p1) (length q1) list p1<q1 
 ... | (xs' , prf) rewrite p3 | take-prop p1 (x1 ∷ p2)
   with subst (λ h → take (length q1) h ≡ p1 ++ xs') q3 prf 
@@ -273,8 +278,8 @@ equality1 P Ppr (list , to , from) x1 x2 px1 px2
 
 
 equality1 P Ppr  (list , to , from) x1 x2 px1 px2 
-  | it x1in x1inprf | it x2in x2inprf 
-  | it (p1 , p2 , p3) pprf | it (q1 , q2 , q3) qprf 
+  | x1in | [ x1inprf ] | x2in | [ x2inprf ]
+  | (p1 , p2 , p3) | [ pprf ] | (q1 , q2 , q3) | [ qprf ]
   | inj₂ p1<q1 
   with list-div (length q1) (length p1) list p1<q1 
 ... | (xs' , prf) rewrite q3 | take-prop q1 (x2 ∷ q2) 

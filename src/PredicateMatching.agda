@@ -2,6 +2,7 @@
 module PredicateMatching where
 
 open import Data.Bool hiding (_≟_)
+open import Data.Bool.Properties using (∧-comm; ∧-assoc; ∨-comm; not-injective)
 open import Data.Sum  hiding (map)
 open import Data.Product  hiding (map)
 open import Data.Maybe hiding (map)
@@ -11,7 +12,6 @@ open import Relation.Binary.PropositionalEquality hiding (inspect)
 open import Relation.Binary.Core 
 open import Relation.Nullary
 
-open import Utilities.BoolProperties
 open import Utilities.ListProperties
 open import Utilities.ListsAddition
 open import Utilities.Logic
@@ -22,9 +22,9 @@ open import Finiteness
 anySound : {X : Set} → (xs : List X) → (p : X → Bool) 
   → any p xs ≡ true → Σ[ x ∈ X ] x ∈ xs × p x ≡ true
 anySound [] p ()
-anySound (x ∷ xs) p pr with inspect (p x) 
-anySound (x ∷ xs) p pr | it true x₁ rewrite x₁ = x , (here refl) , x₁
-anySound (x ∷ xs) p pr | it false x₁ rewrite x₁ with anySound xs p pr 
+anySound (x ∷ xs) p pr with (p x) | inspect p x
+anySound (x ∷ xs) p pr | true | [ x₁ ] rewrite x₁ = x , (here refl) , x₁
+anySound (x ∷ xs) p pr | false | [ x₁ ] rewrite x₁ with anySound xs p pr 
 ... | z1 , z2 , z3 = z1 , there z2 , z3 
 
 
@@ -114,7 +114,7 @@ forallPredsSomeElementComplete pd1 xs p pr (x , xin , px , prop)
   rewrite forallPredsSomeElementSplit xs pd1 (p ∷ []) | pr 
   | anyComplete _ p x 
       (filter-in2 xs x (λ x₁ → not (joinPreds pd1 x₁)) xin 
-      (not-inv2 _ (joinPredsComplete x pd1 prop))) px = refl
+      (cong not (joinPredsComplete x pd1 prop))) px = refl
 
 
 forallPredsSomeElementSound : {X : Set} → (pd1 pd2 : List (X → Bool)) 
@@ -127,21 +127,19 @@ forallPredsSomeElementSound pd1 pd2 xs p pr
   with forallPredsSomeElement pd1 xs 
 forallPredsSomeElementSound pd1 pd2 xs p pr 
   | true  
-  with inspect (any p (filter (λ e → not (joinPreds pd1 e)) xs)) 
-forallPredsSomeElementSound pd1 pd2 xs p pr | true | it true q 
+  with any p (filter (λ e → not (joinPreds pd1 e)) xs) | inspect (any p) (filter (λ e → not (joinPreds pd1 e)) xs)
+forallPredsSomeElementSound pd1 pd2 xs p pr | true | true | [ q ]
   rewrite q 
   with anySound (filter (λ e → not (joinPreds pd1 e)) xs) p q 
 ... | z1 , z2 , z3 = z1 , 
        filter-∈ z1 xs ((λ e → not (joinPreds pd1 e)))  z2 , z3 , 
        (λ p pin → joinPredsSound pd1 z1 
-         (not-inv _ (filter-el z1 xs 
+         (not-injective (filter-el z1 xs 
            (λ e → not (joinPreds pd1 e)) z2)) p pin)
 forallPredsSomeElementSound pd1 pd2 xs p pr 
   | true 
-  | it false q rewrite q with pr 
-forallPredsSomeElementSound pd1 pd2 xs p pr 
-  | true 
-  | it false q | ()
+  | false | [ q ] rewrite q with pr 
+... | ()
 forallPredsSomeElementSound pd1 pd2 xs p pr | false  with pr 
 ... | ()
 
@@ -210,12 +208,12 @@ isMatchedSound : {X : Set} → (x : X) → (pds : List (X → Bool))
      isMatched x pds1 ≡ false × 
      p x ≡ true
 isMatchedSound x [] ()
-isMatchedSound x (x₁ ∷ pds) cp with inspect (x₁ x) 
+isMatchedSound x (x₁ ∷ pds) cp with x₁ x | inspect x₁ x
 isMatchedSound x (x₁ ∷ pds) cp 
-  | it true x₂ rewrite x₂ = [] , pds , x₁ , refl , refl , x₂
+  | true | [ x₂ ] rewrite x₂ = [] , pds , x₁ , refl , refl , x₂
 isMatchedSound x (x₁ ∷ pds) cp 
-  | it false x₂ with isMatchedSound x pds 
-    (subst (λ h → h ∨ foldr _∨_ false (map (λ p → p x) pds) ≡ true) x₂  cp)
+  | false | [ x₂ ] with isMatchedSound x pds
+    (subst (λ h → h ∨ foldr _∨_ false (map (λ p → p x) pds) ≡ true) x₂ (cong₂ _∨_ x₂ cp))
 ... | o1 , o2 , o3 , o4 , o5 , o6 = x₁ ∷ o1 , o2 , o3 ,
      trans (cong (_∷_ x₁) o4) refl , h , o6
   where
@@ -242,7 +240,7 @@ allMatchedSplit : {X : Set} → (xs ys : List X) → (pds : List (X → Bool))
 allMatchedSplit [] ys pds = refl
 allMatchedSplit (x ∷ xs) ys pds 
   rewrite allMatchedSplit xs ys pds 
-  = ∧-assoc (isMatched x pds) (allMatched xs pds) (allMatched ys pds)
+  = sym (∧-assoc (isMatched x pds) (allMatched xs pds) (allMatched ys pds))
 
 
 allMatchedSound : {X : Set} → (xs : List X) → (pds : List (X → Bool))
@@ -396,7 +394,7 @@ predicateMatchingComplete kf pds1 pds2 p fun pr x ch px
          (ls31 , ls32) ls4 ls5 ch ls6 px 
 ... | ap rewrite ap 
   with cong (λ { (z ∷ zs) → z ; [] → (ls31 , ls32) }) 
-            (list-= pds1 ((ls31 , ls32) ∷ ls2) ((p , fun) ∷ pds2) ls4)
+            (++-cancelˡ pds1 ls4)
 ... | eqp = subst (λ h → _ ≡ h x) ( (cong proj₂ eqp)) (sym ls7)
 
 
