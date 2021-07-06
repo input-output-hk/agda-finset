@@ -1,3 +1,4 @@
+{-# OPTIONS --safe #-}
 
 module Prover where
 

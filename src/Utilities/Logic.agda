@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K --safe #-}
+
 module Utilities.Logic where
 
 open import Data.Nat

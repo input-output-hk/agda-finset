@@ -1,4 +1,4 @@
-
+{-# OPTIONS --safe #-}
 
 module FiniteSubset where
 

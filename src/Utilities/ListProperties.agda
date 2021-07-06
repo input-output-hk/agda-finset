@@ -1,3 +1,5 @@
+{-# OPTIONS --safe #-}
+
 module Utilities.ListProperties where
 
 open import Relation.Nullary
@@ -129,7 +131,7 @@ eq-cons x .x xs .xs refl = refl
 ∈-++⁺ʳ-pos [] xs₂ pin = refl
 ∈-++⁺ʳ-pos (x₁ ∷ xs₁) xs₂ pin = cong suc (∈-++⁺ʳ-pos xs₁ xs₂  pin)
 
-postulate ∈-++⁺ʳ-pos' : {X : Set}{x : X}(xs₁ xs₂ : List X) → (pin : x ∈ xs₂) → ∈len (++⁺ʳ xs₁ pin) ≡ (∈len pin) + (length xs₁)
+--postulate ∈-++⁺ʳ-pos' : {X : Set}{x : X}(xs₁ xs₂ : List X) → (pin : x ∈ xs₂) → ∈len (++⁺ʳ xs₁ pin) ≡ (∈len pin) + (length xs₁)
 
 
 ∈-split : {X : Set} →  {xs₁ xs₂ : List X} → {x : X}

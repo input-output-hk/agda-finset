@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K --safe #-}
+
 module Utilities.ArithmeticProperties where
 
 open import Relation.Binary.PropositionalEquality

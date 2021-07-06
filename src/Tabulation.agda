@@ -1,5 +1,4 @@
-
-
+{-# OPTIONS --safe #-}
 
 module Tabulation where
 

@@ -1,3 +1,5 @@
+{-# OPTIONS --safe #-}
+
 module Utilities.FinProperties where
 
 open import Relation.Binary

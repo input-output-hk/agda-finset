@@ -1,3 +1,5 @@
+{-# OPTIONS --safe #-}
+
 module Finiteness where
 
 open import Relation.Binary 
