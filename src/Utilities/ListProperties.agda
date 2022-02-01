@@ -5,7 +5,7 @@ module Utilities.ListProperties where
 open import Relation.Nullary
 open import Relation.Binary
 open import Relation.Nullary.Decidable hiding (map)
-open import Data.List hiding (filter) renaming (boolFilter to filter)
+open import Data.List hiding (filter)
 open import Data.List.Properties hiding (map-cong)
 open import Data.List.Properties using (++-assoc; ++-cancelˡ; map-++-commute; ++-identityʳ) public
 open import Data.List.Membership.Propositional public
@@ -15,6 +15,7 @@ open import Data.List.Relation.Unary.Any.Properties using (++⁺ʳ; ++⁺ˡ; ++�
 open import Relation.Binary.PropositionalEquality
 open import Data.Product hiding (map)
 open import Data.Empty
+open import Data.Bool using (Bool; true)
 open import Data.Nat hiding (_<_)
 open import Utilities.Logic
 open import Utilities.ArithmeticProperties
@@ -22,6 +23,10 @@ open import Data.Sum hiding (map)
 open import Level hiding (suc)
 open import Data.List.Relation.Unary.Unique.Propositional renaming (Unique to NoDupInd) public
 open import Data.List.Relation.Unary.All.Properties using (All¬⇒¬Any; ¬Any⇒All¬) public
+
+private
+  filter : ∀ {A : Set} → (P : A → Bool) → List A → List A
+  filter P = Data.List.filter (λ x → P x Data.Bool.≟ true)
 
 DecIn : ∀ X → Set
 DecIn X = Decidable (_∈_ {A = X})

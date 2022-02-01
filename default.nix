@@ -1,4 +1,4 @@
-{ nixpkgs ?  <nixpkgs> }:
+{ nixpkgs ? <nixpkgs> }:
 with (import nixpkgs {});
 agdaPackages.mkDerivation {
   version = "0.9";
