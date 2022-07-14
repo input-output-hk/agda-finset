@@ -152,10 +152,8 @@ ex₁ = combs (λ x → eqℕ x 2 ) (1 ∷ 2 ∷ 3 ∷ 2 ∷ [])
 -}
 
 {- fine -}
-{-
 filter : {X : Set} → (f : X → Bool) → List X → List X
-filter f xs = foldl (λ res x → if f x then x ∷ res else res) [] xs
--}
+filter f xs = Data.List.filter (λ x → f x ≟ true) xs
 
 
 

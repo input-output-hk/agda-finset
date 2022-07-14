@@ -7,7 +7,7 @@ open import Data.Bool.Properties using (∧-comm; ∧-assoc; ∨-comm; not-injec
 open import Data.Sum  hiding (map)
 open import Data.Product  hiding (map)
 open import Data.Maybe hiding (map)
-open import Data.List hiding (filter) renaming (boolFilter to filter)
+open import Data.List hiding (filter)
 
 open import Relation.Binary.PropositionalEquality hiding (inspect)
 open import Relation.Binary.Core 

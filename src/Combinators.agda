@@ -8,7 +8,7 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.Core 
 open import Relation.Nullary
 
-open import Data.List hiding (product ; sum ; [_] ; filter) renaming (boolFilter to filter)
+open import Data.List hiding (product ; sum ; [_] ; filter)
 open import Data.Empty
 open import Data.Unit hiding (_≟_ ; _≤_)
 open import Data.Sum hiding (map ; [_,_])
