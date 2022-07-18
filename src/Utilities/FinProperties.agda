@@ -19,7 +19,7 @@ open import Data.Fin
   renaming (suc to fsuc ; zero to fzero ; pred to fpred)
 open import Data.Empty
 open import Data.Nat
-open import Data.Unit hiding (_≤_ ; _≟_)
+open import Data.Unit hiding (_≟_)
 open import Data.Vec
   renaming (map to vmap ; _++_ to _++v_ ; _∷_ to _::_)
   hiding (drop ; take ; foldl ; foldr ; length ; allFin)

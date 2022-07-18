@@ -10,7 +10,7 @@ open import Relation.Nullary
 
 open import Data.List hiding (product ; sum ; [_] ; filter)
 open import Data.Empty
-open import Data.Unit hiding (_≟_ ; _≤_)
+open import Data.Unit hiding (_≟_)
 open import Data.Sum hiding (map ; [_,_])
 open import Data.Product hiding (map ; <_,_>)
 open import Data.Bool

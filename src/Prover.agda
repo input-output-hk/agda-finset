@@ -12,7 +12,7 @@ open import Level
 
 open import Data.List
 open import Data.Product hiding (map)
-open import Data.Unit hiding (_≤_)
+open import Data.Unit
 open import Data.Empty
 open import Data.Nat hiding (_⊔_)
 
